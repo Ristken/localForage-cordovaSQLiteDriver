@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2015 Mozilla
  * Licensed under Apache 2.0 license.
- * 
+ *
  * ======================================
  *
  * base64-arraybuffer
@@ -113,8 +113,7 @@
                 // Open the database; the openDatabase API will automatically
                 // create it for us if it doesn't exist.
                 try {
-                    dbInfo.db = openDatabase(dbInfo.name, String(dbInfo.version),
-                                             dbInfo.description, dbInfo.size);
+                    dbInfo.db = openDatabase({name: dbInfo.name || 'lf', location: 'default'});
                 } catch (e) {
                     reject(e);
                 }
