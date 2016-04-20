@@ -47,6 +47,20 @@
 
     var serializer = window.localforage.getSerializer();
 
+    function serialize (value) {
+        return serializer.then(function (serializer) {
+            return new Promise(function (resolve, reject) {
+                serializer.serialize(value, function (value, error) {
+                    if (error) {
+                        reject(error);
+                    } else {
+                        resolve(value);
+                    }
+                });
+            })
+        })
+    }
+
     var deviceReady = new Promise(function (resolve, reject) {
         if (!window.cordova) {
             reject(new Error('Cordova is required'));
@@ -92,9 +106,9 @@
     }
 
     function openDatabaseImpl() {
-        deviceReady.then(function () {
+        return deviceReady.then(function () {
                 return new Promise(function (resolve, reject) {
-                    openDatabase({name: dbOptions.name, location: dbOptions.location}, resolve, reject);
+                    window.sqlitePlugin.openDatabase({name: dbOptions.name, location: dbOptions.location}, resolve, reject);
                 });
             })
             .then(function (db) {
@@ -105,16 +119,13 @@
     }
 
     var cachedOpenPromise = null;
-    function openDatabase () {
-        if (cachedOpenPromise) {
-            return cachedOpenPromise;
-        } else {
-            if (!dbOptions.inited) {
-                return (cachedOpenPromise = Promise.reject(new Error('Options not yet initialized')));
-            } else {
-                return (cachedOpenPromise = openDatabaseImpl());
-            }
+    function openDatabaseCached () {
+        if (!cachedOpenPromise) {
+            cachedOpenPromise = !dbOptions.inited ?
+                Promise.reject(new Error('Options not yet initialized')) :
+                openDatabaseImpl();
         }
+        return cachedOpenPromise;
     }
 
     // Given sql and replacements, execute against the provided database
@@ -149,7 +160,7 @@
         key = ensureString(key);
         return withCallback(callback, serializer
             .then(function (serializer) {
-                return openDatabase()
+                return openDatabaseCached()
                     // ? doesn't work for things like tablename in the query, hopefully, clients won't sql inject themselves
                     .then(transact('SELECT * FROM ' + dbOptions.storeName + ' WHERE key = ? LIMIT 1', [key]))
                     .then(function (results) {
@@ -164,7 +175,7 @@
     function iterate(iterator, callback) {
         return withCallback(callback, serializer
             .then(function (serializer) {
-                return openDatabase()
+                return openDatabaseCached()
                     .then(transact('SELECT * FROM ' + dbOptions.storeName, []))
                     .then(function (results) {
                         var rows = results.rows;
@@ -188,27 +199,27 @@
 
     function setItem(key, value, callback) {
         key = ensureString(key);
-        return withCallback(callback, serializer
-            .then(function (serializer) {
-                return openDatabase()
-                    .then(transact('INSERT OR REPLACE INTO ' + dbOptions.storeName + ' (key, value) VALUES (?, ?)', [key, serializer.serialize(value)]))
+        return withCallback(callback, serialize(value)
+            .then(function (serVal) {
+                return openDatabaseCached()
+                    .then(transact('INSERT OR REPLACE INTO ' + dbOptions.storeName + ' (key, value) VALUES (?, ?)', [key, serVal]))
                     .then(constant(value));
             }));
     }
 
     function removeItem(key, callback) {
         key = ensureString(key);
-        return withCallback(callback, openDatabase()
+        return withCallback(callback, openDatabaseCached()
             .then(transact('DELETE FROM ' + dbOptions.storeName + ' WHERE key = ?', [key])));
     }
 
     function clear(callback) {
-        return withCallback(callback, openDatabase()
+        return withCallback(callback, openDatabaseCached()
             .then(transact('DELETE FROM ' + dbOptions.storeName)));
     }
 
     function length(callback) {
-        return withCallback(callback, openDatabase()
+        return withCallback(callback, openDatabaseCached()
             .then(transact('SELECT COUNT(key) as c FROM ' + dbOptions.storeName))
             .then(function (results) {
                 return results.rows.item(0).c;
@@ -216,7 +227,7 @@
     }
 
     function key(n, callback) {
-        return withCallback(callback, openDatabase()
+        return withCallback(callback, openDatabaseCached()
             .then(transact('SELECT key FROM ' + dbOptions.storeName + ' WHERE id = ? LIMIT 1', [n + 1]))
             .then(function (results) {
                 return results.rows.length > 0 ?
@@ -225,7 +236,7 @@
     }
 
     function keys(callback) {
-        return withCallback(callback, openDatabase()
+        return withCallback(callback, openDatabaseCached()
             .then(transact('SELECT key FROM ' + dbOptions.storeName))
             .then(function (results) {
                 var keys = [];
