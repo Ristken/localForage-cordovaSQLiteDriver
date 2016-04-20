@@ -82,7 +82,7 @@
     }
 
     function _support () {
-        return deviceReady()
+        return deviceReady
             .then(function () {
                 return true;
             })
