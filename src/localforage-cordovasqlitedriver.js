@@ -57,8 +57,8 @@
                         resolve(value);
                     }
                 });
-            })
-        })
+            });
+        });
     }
 
     var deviceReady = new Promise(function (resolve, reject) {
@@ -228,7 +228,7 @@
 
     function key(n, callback) {
         return withCallback(callback, openDatabaseCached()
-            .then(transact('SELECT key FROM ' + dbOptions.storeName + ' WHERE id = ? LIMIT 1', [n + 1]))
+            .then(transact('SELECT key FROM ' + dbOptions.storeName + ' ORDER BY key LIMIT 1 OFFSET ?', [n]))
             .then(function (results) {
                 return results.rows.length > 0 ?
                     results.rows.item(0).key : null;
