@@ -1,0 +1,22 @@
+{
+  "name": "www",
+  "homepage": "https://github.com/Ristken/localForage-cordovaSQLiteDriver",
+  "authors": [
+    "Ryan Zeigler <ryan.zeigler@taillight.com>"
+  ],
+  "description": "test harness for localforage driver",
+  "main": "js/index.js",
+  "moduleType": [],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "localforage-cordovasqlitedriver": "../../#master"
+  }
+}

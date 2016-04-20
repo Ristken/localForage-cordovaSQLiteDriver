@@ -1,0 +1,23 @@
+{
+    "curly": true,
+    "eqeqeq": true,
+    "immed": true,
+    "latedef": "nofunc",
+    "newcap": true,
+    "noarg": true,
+    "quotmark": "single",
+    "sub": true,
+    "undef": true,
+    "unused": true,
+    "eqnull": true,
+    "strict": true,
+    "maxerr": 0,
+    "predef": [
+        "module",
+        "require",
+        "document",
+        "define",
+        "window",
+        "Promise"
+    ]
+}
